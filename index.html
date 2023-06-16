@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Snake</title>
+	<style type="text/css">
+		body {
+			padding: 0;
+			margin: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+		}
+
+	</style>
+</head>
+<body>
+
+  <canvas style="background: black;" id="canvas" width="600px" height="600px"></canvas>
+  <script type="text/javascript">
+     let canvas = document.getElementById("canvas");
+     let context = canvas.getContext("2d");
+     let gameSpeed = 8;
+     let currentTime = 0;
+     let gameEntitiesSize = 20;
+     let gameRunning = true;
+
+
+     class Entity {
+     	constructor(x,y,size,color) {
+     		this.old_x = this.x = x;
+     		this.old_y = this.y = y;
+     		this.size = size;
+     		this.color = color;
+     	}
+
+     	update_old_position() {
+     		this.old_x = this.x;
+     		this.old_y = this.y;
+     	}
+
+     	draw() {
+     		context.fillStyle = this.color;
+     		context.fillRect(this.x,this.y,this.size,this.size);
+     	}
+     }
+
+
+     class Snake extends Entity{
+     	constructor(x,y,size,color) {
+     		super(x,y,size,color);
+     		this.velocity_x = size;
+     		this.velocity_y = 0;
+     		this.allowMove = true;
+     		this.tail_length = 0;
+     		this.tails = [];
+     	}
+
+     	move(x,y) {
+     		if (!this.allowMove) return;
+     		if (!y && this.velocity_x) {
+               x = this.velocity_x / this.size;
+     		}
+     		if (!x && this.velocity_y) {
+               y = this.velocity_y / this.size;
+     		}
+     		this.velocity_x = x * this.size;
+     	    this.velocity_y = y * this.size;
+            this.allowMove = false;
+            setTimeout(function() {
+               snake.allowMove = true;
+            },100);
+     	}
+
+     	isTouch (object) {
+            if (this.x + this.size > object.x && this.x < object.x + object.size && this.y + this.size > object.y && this.y < object.y + object.size) return true;
+     	}
+
+     	extend() {
+     		if (this.x > canvas.width) this.x = 0;
+     		if (this.x < 0) this.x = canvas.width - this.size;
+     		if (this.y < 0) this.y = canvas.height - this.size;
+     		if (this.y > canvas.height) this.y = 0;
+     	}
+
+     	create_tail() {
+     		let x,y;
+     		let color = "blue";
+     		if (this.tails.length == 0) {
+     			x = this.old_x;
+     			y = this.old_y;
+     		}
+     		else {
+     			let last_tail = this.tails[this.tails.length - 1];
+     			x = last_tail.old_x;
+     			y = last_tail.old_y;
+     		}
+     		this.tails.push(new Entity(x,y,this.size,color));
+     	}
+
+     	update_tails() {
+     		if (this.tails.length == 0) return;
+            let leading_tail = this.tails[0];
+            leading_tail.update_old_position();
+            leading_tail.x = this.old_x;
+            leading_tail.y = this.old_y;
+
+            for (let i = 1;i < this.tails.length;i++) {
+            	let preceding_tail = this.tails[i - 1];
+            	let current_tail = this.tails[i];
+            	current_tail.update_old_position();
+            	current_tail.x = preceding_tail.old_x;
+            	current_tail.y = preceding_tail.old_y;
+            }
+            for (let i = 0;i < this.tails.length;i++) {
+            	this.tails[i].draw();
+            }
+     	}
+
+
+     	update() {
+     	    this.update_old_position();
+     		this.x += this.velocity_x;
+     		this.y += this.velocity_y;
+     		this.extend();
+     		this.draw();
+     		this.update_tails();
+     	}
+     }
+
+     class Food extends Entity{
+     	constructor (x,y,size,color) {
+     		super(x,y,size,color);
+     	}
+
+     	move() {
+     		this.x = Math.round(Math.random() * ((canvas.width - gameEntitiesSize) / gameEntitiesSize)) * gameEntitiesSize;
+     		this.y = Math.round(Math.random() * ((canvas.height - gameEntitiesSize) / gameEntitiesSize)) * gameEntitiesSize;
+     	}
+     }
+
+     let snake = new Snake(0,0,gameEntitiesSize,"red");
+     let food = new Food(Math.round(Math.random() * ((canvas.width - gameEntitiesSize) / gameEntitiesSize)) * gameEntitiesSize,Math.round(Math.random() * ((canvas.height - gameEntitiesSize) / gameEntitiesSize)) * gameEntitiesSize,gameEntitiesSize,"yellow");
+
+     function animate() {
+     	currentTime++;
+     	requestAnimationFrame(animate);
+     	if (currentTime < gameSpeed || !gameRunning) return;
+     	currentTime = 0;
+     	context.clearRect(0,0,canvas.width,canvas.height);
+        
+        if (snake.isTouch(food)) {
+        	snake.create_tail();
+        	food.move();
+        }
+        for (let i = 0;i < snake.tails.length;i++) {
+        	let tail = snake.tails[i];
+        	if (snake.isTouch(tail)) {
+        		gameRunning = false;
+        	}
+        }
+     	snake.update();
+     	food.draw();     
+     }
+     requestAnimationFrame(animate);
+
+     window.onkeydown = function(event) {
+        switch (event.keyCode) {
+            case 37 :
+            	snake.move(-1,0);
+            	break;
+            case 38 :
+            	snake.move(0,-1);
+            	break;
+            case 39 :
+            	snake.move(1,0);
+            	break;
+            case 40 :
+            	snake.move(0,1);
+            	break;
+        }
+        
+     }
+   
+  </script>
+</body>
+</html>
