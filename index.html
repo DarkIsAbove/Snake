@@ -22,10 +22,11 @@
   <script type="text/javascript">
      let canvas = document.getElementById("canvas");
      let context = canvas.getContext("2d");
-     let gameSpeed = 8;
+     let gameSpeed = 15;
      let currentTime = 0;
      let gameEntitiesSize = 20;
      let gameRunning = true;
+     let frameRemoveTime = 200;
 
 
      class Entity {
@@ -79,15 +80,15 @@
      	}
 
      	extend() {
-     		if (this.x > canvas.width) this.x = 0;
+     		if (this.x + this.size > canvas.width) this.x = 0;
      		if (this.x < 0) this.x = canvas.width - this.size;
      		if (this.y < 0) this.y = canvas.height - this.size;
-     		if (this.y > canvas.height) this.y = 0;
+     		if (this.y + this.size> canvas.height) this.y = 0;
      	}
 
      	create_tail() {
      		let x,y;
-     		let color = "blue";
+     		let color = `hsl(${Math.random() * 360},100%,50%)`;
      		if (this.tails.length == 0) {
      			x = this.old_x;
      			y = this.old_y;
@@ -149,7 +150,7 @@
      	requestAnimationFrame(animate);
      	if (currentTime < gameSpeed || !gameRunning) return;
      	currentTime = 0;
-     	context.clearRect(0,0,canvas.width,canvas.height);
+   
         
         if (snake.isTouch(food)) {
         	snake.create_tail();
@@ -183,6 +184,12 @@
         }
         
      }
+   
+
+     setInterval(function() {
+           context.fillStyle = "rgba(0,0,0,0.1)";
+           context.fillRect(0,0,canvas.width,canvas.height);
+     },frameRemoveTime);
    
   </script>
 </body>
